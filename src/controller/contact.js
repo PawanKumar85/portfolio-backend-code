@@ -53,24 +53,6 @@ export const get_contact = async (req, res) => {
   }
 };
 
-export const get_single_contact = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const contact = await Contact.findById({ _id: id });
-    if (!contact) {
-      return res.status(404).json({ message: "Contact not found" });
-    }
-
-    return res.status(200).json({ success: true, contact });
-  } catch (error) {
-    return res.status(500).json({
-      message: "server error",
-      error: error.message
-    });
-  }
-};
-
 export const delete_contact = async (req, res) => {
   try {
     const { id } = req.params;
@@ -85,6 +67,34 @@ export const delete_contact = async (req, res) => {
       message: "server error",
       error: error.message,
       status: 500,
+    });
+  }
+};
+
+export const get_single_contact = async (req, res) => {
+  const { id } = req.params; // The ID of the contact to retrieve
+
+  try {
+    // Find the Contact by its ID
+    const contact = await Contact.findById(id);
+
+    if (!contact) {
+      return res.status(404).json({
+        success: false,
+        message: "Contact not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Contact fetched successfully",
+      data: contact,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
     });
   }
 };
