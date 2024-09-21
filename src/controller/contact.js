@@ -1,8 +1,6 @@
 import Contact from "../model/contact.js";
-import connectDB from "../config/database.js";
 import emailValidator from "email-validator";
 
-connectDB();
 
 export const post_contact = async (req, res) => {
   try {

@@ -5,13 +5,12 @@ import {
   delete_contact,
   get_single_contact,
 } from "../controller/contact.js";
-const router = express.Router();
+const contact = express.Router();
 
-router
-  .post("/contact", post_contact)
-  .get("/contact", get_contact)
+contact
+  .post("/contacts", post_contact)
+  .get("/contacts", get_contact)
   .delete("/:id", delete_contact)
   .get("/:id", get_single_contact);
 
-export default router;
-cd
+export default contact;
