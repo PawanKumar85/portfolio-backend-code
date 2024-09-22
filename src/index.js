@@ -7,6 +7,7 @@ import about from "./routes/about.js";
 import education from "./routes/education.js";
 import skill from "./routes/skill.js";
 import platform from "./routes/platform.js";
+import project from "./routes/project.js";
 dotenv.config();
 
 connectDB();
@@ -24,6 +25,7 @@ app.use("/api/v2/portfolio", about);
 app.use("/api/v2/portfolio", education);
 app.use("/api/v2/portfolio", skill);
 app.use("/api/v2/portfolio", platform);
+app.use("/api/v2/portfolio", project);
 
 app.get("/", (req, res) => {
   res.send("API is running...");
