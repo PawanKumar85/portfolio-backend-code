@@ -1,32 +1,44 @@
 import Contact from "../model/contact.js";
 import emailValidator from "email-validator";
 
-
 export const post_contact = async (req, res) => {
   try {
     const { name, email, message } = req.body;
 
-    if (!email || !name || !message) {
-      return res.status(400).json({ message: "All fields are required" });
+    if (!name || !email || !message) {
+      return res.status(400).json({
+        message: "Please provide all required fields",
+        status: 400,
+      });
     }
 
-    if (!emailValidator.validate(email)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid email address" });
+    if (message.length < 10) {
+      return res.status(400).json({
+        message: "Message must be at least 10 characters long",
+        status: 400,
+      });
     }
 
-    const existingContact = await Contact.findOne({ email });
-    if (existingContact) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email already exists" });
+    const findEmail = await Contact.findOne({
+      $or: [{ email }, { name }],
+    });
+
+    if (findEmail) {
+      findEmail.message.push(message); // Assuming message is an array in the model
+      await findEmail.save();
+      return res.status(200).json({
+        message: "Message posted successfully",
+        status: 200,
+      });
     }
 
-    const newContact = new Contact({ name, email, message });
+    const newContact = new Contact({ name, email, message: [message] });
     await newContact.save();
 
-    res.status(201).json({ success: true, message: "Contact created" });
+    return res.status(201).json({
+      message: "Contact added successfully",
+      status: 201,
+    });
   } catch (error) {
     return res.status(500).json({
       message: "server error",
@@ -56,45 +68,25 @@ export const get_contact = async (req, res) => {
 export const delete_contact = async (req, res) => {
   try {
     const { id } = req.params;
-    const contact = await Contact.findByIdAndDelete({ _id: id });
-    if (!contact) {
-      return res.status(404).json({ message: "Contact not found" });
+
+    const deletedContact = await Contact.findByIdAndDelete(id);
+
+    if (!deletedContact) {
+      return res.status(404).json({
+        message: "Contact not found",
+        status: 404,
+      });
     }
 
-    return res.status(200).json({ message: "Contact deleted" });
+    return res.status(200).json({
+      message: "Contact deleted successfully",
+      status: 200,
+    });
   } catch (error) {
     res.status(500).json({
       message: "server error",
       error: error.message,
       status: 500,
-    });
-  }
-};
-
-export const get_single_contact = async (req, res) => {
-  const { id } = req.params; // The ID of the contact to retrieve
-
-  try {
-    // Find the Contact by its ID
-    const contact = await Contact.findById(id);
-
-    if (!contact) {
-      return res.status(404).json({
-        success: false,
-        message: "Contact not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Contact fetched successfully",
-      data: contact,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
     });
   }
 };

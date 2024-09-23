@@ -5,22 +5,19 @@ const contactSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      minlength: 3,
-      maxlength: 50,
     },
     email: {
       type: String,
       required: true,
     },
     message: {
-      type: String,
+      type: [String],
       required: true,
-      minlength: 10,
-      maxlength: 200,
+      minLength: 10,
+      maxLength: 500,
     },
   },
   { timestamps: true }
 );
 const Contact = mongoose.model("Contact", contactSchema);
-
 export default Contact;
