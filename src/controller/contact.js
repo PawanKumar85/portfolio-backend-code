@@ -1,92 +1,71 @@
-import Contact from "../model/contact.js";
-import emailValidator from "email-validator";
+// email.controller.js
+import { sendMail } from "../helper/emailer.js"; // Ensure the path is correct
 
-export const post_contact = async (req, res) => {
+// Function to validate input fields
+const validateInput = (name, email, message) => {
+  const errors = [];
+
+  if (name.length < 2) {
+    errors.push("Name should be at least 2 characters long");
+  }
+  if (message.length < 10) {
+    errors.push("Message should be at least 10 characters long");
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    errors.push("A valid email is required");
+  }
+
+  return errors;
+};
+
+// Function to send email
+export const sendEmail = async (req, res) => {
   try {
-    const { name, email, message } = req.body;
+    // Trim the input fields
+    let { name, email, message } = req.body;
+    name = name.trim();
+    email = email.trim();
+    message = message.trim();
 
-    if (!name || !email || !message) {
+    // Validate input
+    const validationErrors = validateInput(name, email, message);
+    if (validationErrors.length > 0) {
       return res.status(400).json({
-        message: "Please provide all required fields",
+        message: validationErrors.join(", "),
         status: 400,
       });
     }
 
-    if (message.length < 10) {
-      return res.status(400).json({
-        message: "Message must be at least 10 characters long",
-        status: 400,
-      });
-    }
+    // Send the email
+    const emailResponse = await sendMail(
+      `${name} <${email}>`, // From field with sender's name
+      "New Query Added from Portfolio",
+      `Name: ${name}\nEmail: ${email}`,
+      `<p>${message}</p>`
+    );
 
-    const findEmail = await Contact.findOne({
-      $or: [{ email }, { name }],
-    });
-
-    if (findEmail) {
-      findEmail.message.push(message); // Assuming message is an array in the model
-      await findEmail.save();
-      return res.status(200).json({
-        message: "Message posted successfully",
+    // Check if email was sent successfully
+    if (emailResponse.success) {
+      return res.json({
+        message: "Email sent successfully",
         status: 200,
+        messageId: emailResponse.messageId, // Include the message ID
+      });
+    } else {
+      // Handle the error if the email sending failed
+      return res.status(400).json({
+        message: "Failed to send email",
+        status: 400,
+        error: emailResponse.error || "An unknown error occurred", // Fallback error message
       });
     }
-
-    const newContact = new Contact({ name, email, message: [message] });
-    await newContact.save();
-
-    return res.status(201).json({
-      message: "Contact added successfully",
-      status: 201,
-    });
   } catch (error) {
+    console.error("Error in sendEmail:", error); // Log unexpected errors
     return res.status(500).json({
-      message: "server error",
-      error: error.message,
+      message: "Failed to send email",
       status: 500,
-    });
-  }
-};
-
-export const get_contact = async (req, res) => {
-  try {
-    const contacts = await Contact.find({});
-    return res.status(200).json({
-      success: true,
-      contacts,
-      total: contacts.length,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "server error",
       error: error.message,
-      status: 500,
-    });
-  }
-};
-
-export const delete_contact = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const deletedContact = await Contact.findByIdAndDelete(id);
-
-    if (!deletedContact) {
-      return res.status(404).json({
-        message: "Contact not found",
-        status: 404,
-      });
-    }
-
-    return res.status(200).json({
-      message: "Contact deleted successfully",
-      status: 200,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "server error",
-      error: error.message,
-      status: 500,
     });
   }
 };
